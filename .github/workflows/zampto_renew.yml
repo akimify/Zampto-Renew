@@ -11,6 +11,7 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      # ── 代码检出 ────────────────────────────────────────────
       - name: 📥 下载公库代码
         uses: actions/checkout@v4
 
@@ -24,6 +25,7 @@ jobs:
       - name: 📂 移动脚本到工作目录
         run: mv private/zampto_renew.py zampto_renew.py
 
+      # ── 运行环境 ────────────────────────────────────────────
       - name: 🐍 设置 Python
         uses: actions/setup-python@v5
         with:
@@ -44,6 +46,7 @@ jobs:
           pip install seleniumbase
           seleniumbase install chromedriver
 
+      # ── 代理（可选） ────────────────────────────────────────
       - name: 🛡️ 启动 GOST 代理转发
         if: ${{ env.GOST_PROXY != '' }}
         env:
@@ -61,6 +64,7 @@ jobs:
           IP_MASKED=$(echo "$IP" | sed 's/\([0-9]*\.[0-9]*\.[0-9]*\.\)[0-9]*/\1xx/')
           echo "✅ GOST 已启动，出口IP：$IP_MASKED"
 
+      # ── 主脚本 ──────────────────────────────────────────────
       - name: 🚀 运行续期脚本
         env:
           PYTHONIOENCODING: utf-8
@@ -68,8 +72,13 @@ jobs:
           GOST_PROXY: ${{ secrets.GOST_PROXY }}
           TG_BOT: ${{ secrets.TG_BOT }}
         run: |
-          xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" python zampto_renew.py
+          # 分辨率 1920×1080，与脚本中坐标计算保持一致
+          xvfb-run \
+            --auto-servernum \
+            --server-args="-screen 0 1920x1080x24" \
+            python zampto_renew.py
 
+      # ── 产物 ────────────────────────────────────────────────
       - name: 📸 上传调试截图
         if: always()
         uses: actions/upload-artifact@v4
